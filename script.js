@@ -6,7 +6,6 @@ let currentPhase = "inhale";
 let activeSound = null;
 let currentAudio = null;
 
-// Audio file paths
 const audioFiles = {
   rain: 'Rain.mp3',
   ocean: 'Ocean.mp3',
@@ -33,14 +32,12 @@ function createParticles() {
 function toggleSound(soundType) {
   document.querySelectorAll(".sound-btn").forEach((btn) => btn.classList.remove("active"));
 
-  // Stop current audio
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio = null;
   }
 
-  // If clicking the same sound or silence, turn it off
   if (soundType === "silence" || activeSound === soundType) {
     activeSound = null;
     return;
@@ -59,7 +56,6 @@ function playAmbientSound(type) {
   currentAudio.loop = true;
   currentAudio.volume = 0.5;
 
-  // Adjust volume for specific sounds
   if (type === 'ocean' || type === 'rain') {
     currentAudio.volume = 0.6;
   } else if (type === 'meditation' || type === 'nostalgia') {
@@ -76,16 +72,14 @@ function playAmbientSound(type) {
 function playBreathSound() {
   if (!audioFiles.breath) return;
 
-  // Stop existing breath audio if playing
   if (breathAudio) {
     breathAudio.pause();
     breathAudio.currentTime = 0;
   }
 
-  // Create new audio instance
   breathAudio = new Audio(audioFiles.breath);
   breathAudio.volume = 0.6;
-  breathAudio.loop = false; // Don't loop, play once per cycle
+  breathAudio.loop = false; 
 
   breathAudio.play().catch(err => {
     console.error('Error playing breath audio:', err);
@@ -181,5 +175,6 @@ function resetSession() {
   document.getElementById("playBtn").textContent = "Start";
   currentPhase = "inhale";
 }
+
 
 createParticles();
