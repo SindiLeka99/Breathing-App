@@ -5,6 +5,7 @@ let startTime;
 let currentPhase = "inhale";
 let activeSound = null;
 let currentAudio = null;
+let breathAudio = null;
 
 const audioFiles = {
   rain: 'Rain.mp3',
@@ -14,7 +15,8 @@ const audioFiles = {
   wind: 'Wind.mp3',
   fire: 'Fire.mp3',
   meditation: 'Meditation.mp3',
-  nostalgia: 'Nostalgia.mp3'
+  nostalgia: 'Nostalgia.mp3',
+  breath: 'Breathe.mp3'
 };
 
 function createParticles() {
@@ -79,11 +81,19 @@ function playBreathSound() {
 
   breathAudio = new Audio(audioFiles.breath);
   breathAudio.volume = 0.6;
-  breathAudio.loop = false; 
+  breathAudio.loop = true; 
 
   breathAudio.play().catch(err => {
     console.error('Error playing breath audio:', err);
   });
+}
+
+function stopBreathSound() {
+  if (breathAudio) {
+    breathAudio.pause();
+    breathAudio.currentTime = 0;
+    breathAudio = null;
+  }
 }
 
 function toggleBreathing() {
@@ -95,10 +105,12 @@ function toggleBreathing() {
     startBreathing();
     playBtn.textContent = "Pause";
     playBtn.classList.add("active");
+    playBreathSound(); 
   } else {
     stopBreathing();
     playBtn.textContent = "Start";
     playBtn.classList.remove("active");
+    stopBreathSound(); 
   }
 }
 
@@ -131,16 +143,9 @@ function startBreathingCycle() {
   updateInstruction();
 
   breathingInterval = setInterval(() => {
-    currentPhase =
-      currentPhase === "inhale"
-        ? "hold"
-        : currentPhase === "hold"
-        ? "exhale"
-        : currentPhase === "exhale"
-        ? "rest"
-        : "inhale";
+    currentPhase = currentPhase === "inhale" ? "exhale" : "inhale";
     updateInstruction();
-  }, 2000);
+  }, currentPhase === "inhale" ? 6000 : 7000); 
 }
 
 function updateInstruction() {
@@ -148,12 +153,16 @@ function updateInstruction() {
 
   const messages = {
     inhale: "Breathe in slowly...",
-    hold: "Hold your breath...",
-    exhale: "Breathe out gently...",
-    rest: "Rest and Prepare...",
+    exhale: "Breathe out gently..."
   };
 
   instruction.textContent = messages[currentPhase];
+  
+  if (breathingInterval) clearInterval(breathingInterval);
+  breathingInterval = setInterval(() => {
+    currentPhase = currentPhase === "inhale" ? "exhale" : "inhale";
+    updateInstruction();
+  }, currentPhase === "inhale" ? 6000 : 7000);
 }
 
 function startTimer() {
@@ -170,11 +179,11 @@ function startTimer() {
 
 function resetSession() {
   stopBreathing();
+  stopBreathSound(); 
   document.getElementById("timer").textContent = "00:00";
   document.getElementById("instruction").textContent = "Click the circle to begin";
   document.getElementById("playBtn").textContent = "Start";
   currentPhase = "inhale";
 }
-
 
 createParticles();
