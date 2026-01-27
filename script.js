@@ -2,6 +2,7 @@ let isBreathing = false;
 let breathingInterval;
 let timerInterval;
 let startTime;
+let sessionStartTime;
 let currentPhase = "inhale";
 let activeSound = null;
 let currentAudio = null;
@@ -18,6 +19,138 @@ const audioFiles = {
   nostalgia: 'Nostalgia.mp3',
   breath: 'Breathe.mp3'
 };
+
+function loadHistory() {
+  const history = localStorage.getItem('meditationHistory');
+  return history ? JSON.parse(history) : [];
+}
+
+function saveHistory(history) {
+  localStorage.setItem('meditationHistory', JSON.stringify(history));
+}
+
+function saveSession(duration) {
+  if (duration < 10) return; 
+  
+  const history = loadHistory();
+  const session = {
+    date: new Date().toISOString(),
+    duration: duration,
+    timestamp: Date.now()
+  };
+  history.push(session);
+  saveHistory(history);
+}
+
+function calculateStats() {
+  const history = loadHistory();
+  if (history.length === 0) {
+    return {
+      totalTime: 0,
+      thisWeekSessions: 0,
+      longestStreak: 0,
+      averageLength: 0,
+      totalSessions: 0
+    };
+  }
+
+  const totalTime = history.reduce((sum, session) => sum + session.duration, 0);
+  const averageLength = Math.floor(totalTime / history.length);
+
+  const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  const thisWeekSessions = history.filter(s => s.timestamp >= oneWeekAgo).length;
+
+  const dates = history.map(s => new Date(s.date).toDateString());
+  const uniqueDates = [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b));
+  
+  let longestStreak = 0;
+  let currentStreak = 1;
+  
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prevDate = new Date(uniqueDates[i - 1]);
+    const currDate = new Date(uniqueDates[i]);
+    const diffDays = Math.floor((currDate - prevDate) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      currentStreak++;
+      longestStreak = Math.max(longestStreak, currentStreak);
+    } else {
+      currentStreak = 1;
+    }
+  }
+  
+  longestStreak = Math.max(longestStreak, currentStreak);
+
+  return {
+    totalTime,
+    thisWeekSessions,
+    longestStreak,
+    averageLength,
+    totalSessions: history.length
+  };
+}
+
+function formatDuration(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (minutes === 0) {
+    return `${secs}s`;
+  }
+  return `${minutes}m ${secs}s`;
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  if (date.toDateString() === today.toDateString()) {
+    return 'Today';
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  } else {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+}
+
+function toggleHistory() {
+  const historyPanel = document.getElementById('historyPanel');
+  const isVisible = historyPanel.style.display === 'block';
+  
+  if (isVisible) {
+    historyPanel.style.display = 'none';
+  } else {
+    historyPanel.style.display = 'block';
+    displayHistory();
+  }
+}
+
+function displayHistory() {
+  const stats = calculateStats();
+  const history = loadHistory().reverse(); 
+  
+  document.getElementById('totalTime').textContent = formatDuration(stats.totalTime);
+  document.getElementById('weekSessions').textContent = stats.thisWeekSessions;
+  document.getElementById('longestStreak').textContent = `${stats.longestStreak} ${stats.longestStreak === 1 ? 'day' : 'days'}`;
+  document.getElementById('avgLength').textContent = formatDuration(stats.averageLength);
+  
+  const historyList = document.getElementById('historyList');
+  
+  if (history.length === 0) {
+    historyList.innerHTML = '<div class="no-history">No meditation sessions yet. Start your first session!</div>';
+    return;
+  }
+  
+  historyList.innerHTML = history.map(session => {
+    return `
+      <div class="history-item">
+        <div class="history-date">${formatDate(session.date)}</div>
+        <div class="history-duration">${formatDuration(session.duration)}</div>
+      </div>
+    `;
+  }).join('');
+}
 
 function createParticles() {
   const container = document.querySelector(".bg-particles");
@@ -117,6 +250,7 @@ function toggleBreathing() {
 function startBreathing() {
   isBreathing = true;
   startTime = Date.now();
+  sessionStartTime = Date.now(); 
   const circle = document.getElementById("breathingCircle");
   const instruction = document.getElementById("instruction");
 
@@ -137,6 +271,12 @@ function stopBreathing() {
 
   if (breathingInterval) clearInterval(breathingInterval);
   if (timerInterval) clearInterval(timerInterval);
+  
+  if (sessionStartTime) {
+    const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+    saveSession(duration);
+    sessionStartTime = null;
+  }
 }
 
 function startBreathingCycle() {
