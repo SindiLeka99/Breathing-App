@@ -20,6 +20,7 @@
         <div class="controls">
             <button class="btn" id="playBtn" onclick="toggleBreathing()">Start</button>
             <button class="btn" onclick="resetSession()">Reset</button>
+            <button class="btn" onclick="toggleHistory()">History</button>
         </div>
         <div class="sound-controls">
             <button class="sound-btn" onclick="toggleSound('rain')">Rain</button>
@@ -33,6 +34,36 @@
             <button class="sound-btn" onclick="toggleSound('silence')">Silence</button>
         </div>
         <div class="timer-display" id="timer">00:00</div>
+        
+        <div class="history-panel" id="historyPanel">
+            <h2>Your Meditation Journey</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Time</div>
+                    <div class="stat-value" id="totalTime">0s</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">This Week</div>
+                    <div class="stat-value" id="weekSessions">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Longest Streak</div>
+                    <div class="stat-value" id="longestStreak">0 days</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Average Length</div>
+                    <div class="stat-value" id="avgLength">0s</div>
+                </div>
+            </div>
+            
+            <div class="history-section">
+                <h3>Recent Sessions</h3>
+                <div class="history-list" id="historyList">
+                    <div class="no-history">No meditation sessions yet. Start your first session!</div>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
